@@ -1,2 +1,13 @@
 <input>
+    <data>
+        <matrix_A matrix_type="tridiagonal" matrix_row="100"  matrix_column="100">
+            <matrix_elements>1 -2 1</matrix_elements>
+        </matrix_A>
+        <matrix_B matrix_type="input" matrix_row="100"  matrix_column="1">
+            <matrix_elements>-1 98*0 -1</matrix_elements>
+        </matrix_B>
+    </data>
+    <settings>
+        <solution>Conjugate-gradient-method</solution>
+    </settings>
 </input>
