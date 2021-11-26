@@ -9,5 +9,7 @@
     </data>
     <settings>
         <solution>Conjugate-gradient-method</solution>
+        <NMAX>1000</NMAX>
+        <Convergence-criteria>1E-07</Convergence-criteria>
     </settings>
 </input>
