@@ -1,51 +1,100 @@
+#/*****************************************************************************/
+#/*                                                                           */
+#/* Codename : Calculation-Method.py                                          */
+#/*                                                                           */
+#/* Created:       2021/11/26 (Xvdongyu)                                      */
+#/* Last modified: 2016/11/26 (Xvdongyu                                       */
+#/* Version:       1.0.0                                                      */
+#/*                                                                           */
+#/* Description: Claculation-Method's Code                                    */
+#/*                                                                           */
+#/* Comments:                                                                 */
+#/*                                                                           */
+#/*                                                                           */
+#/*****************************************************************************/
+
 import numpy as np
 import matplotlib.pyplot as plt
 from xml.dom import minidom
 import os
+import time
+import xlwt
+import datetime
 
 class settings:
+    # This a class for the input.xml' settings
+    # the attribute of the class are:
+    #          self.solution(str): the methods for this problem. The default value is "Conjugate-gradient-method"
+    #          self.nmax(int): The maximum number of iterations calculated by iteration. The default value is 1000
+    #          self.criteria(float): Convergence criteria for iterative computation. The default value is 1E-07
     def __init__(self,setting_tag):
+        
         try:
+            # get the  methods for this problem
             solution_tag = setting_tag.getElementsByTagName("solution")[0]
             self.solution = solution_tag.firstChild.data
         except:
             self.solution = "Conjugate-gradient-method"
+            
         try:
+            # get the maximum number of iterations calculated by iteration
             nmax_tag = setting_tag.getElementsByTagName("NMAX")[0]
             self.nmax = nmax_tag.firstChild.data
             self.nmax = int(self.nmax)
         except:
             self.namx = 1000
+            
         try:
+            # get the convergence criteria for iterative computation.
             convergence_criteria_tag = setting_tag.getElementsByTagName("Convergence-criteria")[0]
             self.criteria = convergence_criteria_tag.firstChild.data
             self.criteria = float(self.criteria)
         except:
             self.criteria = 1E-07
             
+            
 class matrix:
+    # This is a class for input.xml'matrix. It is a part of data.
+    # the attribute of the class are:
+    #          self.matrix_tag(dom): the matrix_tag in input.xml.
+    #          self.matrix_type(str): The method of how to creat the matrix. The default value is "input".
+    #          self.matrix_row(int): the row of matrix. The default value is 1.
+    #          self.matrix_column(int): the column of matrix. The default value is 1.
+    #          self.matrix_elements(np.matrix): the elements of the matrix. No defalut value.
+    # the method of the class is:
+    #          getMatrixElements(self): get MatrixElements for self.matrix_elements.
     def __init__(self,matrix_tag):
+        
+        # get the matrix_tag in input.xml.
         self.matrix_tag = matrix_tag
+        
         try:
+            # get the method of how to creat the matrix.
             self.matrix_type = matrix_tag.getAttribute("matrix_type")
         except:
             self.matrix_type = "input"
+            
         try:
+            # get the row of matrix
             self.matrix_row = int(matrix_tag.getAttribute("matrix_row"))
         except:
             self.matrix_row = 1
+            
         try:
+            # get the column of matrix
             self.matrix_column = int(matrix_tag.getAttribute("matrix_column"))
         except:
             self.matrix_column = 1
     
     def getMatrixElements(self):
+        
         matrix_elements_tag = self.matrix_tag.getElementsByTagName("matrix_elements")[0]
         matrix_elements = matrix_elements_tag.firstChild.data
         matrix_elements = matrix_elements.strip("\n").split() # get the matrix element
         index_num = [] # the location that the repeat num
         repeat_num = [] # the times that the repeat num
         num = [] # the value that the repeat num, it is str! str!
+        
         # try to find where is the repeat input
         for i in range(len(matrix_elements)):
             if "*" in matrix_elements[i]: # if there is a "*" in the matrix elements ,which can make sure it is a repaet input
@@ -54,32 +103,43 @@ class matrix:
                 num.append((matrix_elements[i][int(matrix_elements[i].find("*"))+1:])) # find the repeat num
             else:
                 matrix_elements[i] = float(matrix_elements[i]) # try to change the str input to folat input
+                
         if len(num) > 0:
             for i in range(len(num)):
                 for j in range(repeat_num[-1-i]): # from the last to the first
                     matrix_elements.insert(index_num[-1-i],float(num[-1-i])) # insert the repaet num, the str is change to folat
                 matrix_elements.pop(matrix_elements.index(str(repeat_num[-1-i])+"*"+num[-1-i])) # del the repaet input just like xxx*xxx
+                
         self.matrix_elements = np.matrix(np.zeros((self.matrix_row,self.matrix_column))) # create the matrix elements
+        
         if self.matrix_type == "input": # if the matrix is not the type matrix 
             for i in range(self.matrix_row):
                 for j in range(self.matrix_column):
                     self.matrix_elements[i,j] = matrix_elements[i*self.matrix_column+j]
         elif self.matrix_type == "tridiagonal": # if the matrix is the type tridiagonal matrix
-            self.matrix_elements[0,0], self.matrix_elements[0,1] = matrix_elements[1], matrix_elements[2]
-            self.matrix_elements[-1,-2], self.matrix_elements[-1,-1] = matrix_elements[0], matrix_elements[1]
+            self.matrix_elements[0,0], self.matrix_elements[0,1] = matrix_elements[1], matrix_elements[2] # the first line
+            self.matrix_elements[-1,-2], self.matrix_elements[-1,-1] = matrix_elements[0], matrix_elements[1] # the last line
             for i in range(1,self.matrix_row-1):
                 self.matrix_elements[i,i-1], self.matrix_elements[i,i], self.matrix_elements[i,i+1] = matrix_elements[0], matrix_elements[1], matrix_elements[2]
             
     
 class data:
+    # this is a class for input.xml'data.
+    # the attribute of the class are:
+    #          self.matrix_A(matrix): the A matrix in input.xml. No defalut value
+    #          self.matrix_B(matrix): the B matrix in input.xml. No defalut value
     def __init__(self,data_tag):
+        
         try:
+            # get the A matrix in input.xml
             matrix_A_tag = data_tag.getElementsByTagName("matrix_A")[0]
             self.matrix_A = matrix(matrix_A_tag)
             self.matrix_A.getMatrixElements()
         except:
             os._exit(0)
+            
         try:
+            # get the A matrix in input.xml
             matrix_B_tag = data_tag.getElementsByTagName("matrix_B")[0]
             self.matrix_B = matrix(matrix_B_tag)
             self.matrix_B.getMatrixElements()
@@ -87,6 +147,14 @@ class data:
             os._exit(0)
 
 def DataPretreatment(filename):
+    # this is a function for data pro-processing.
+    # the main purpose of this function is try to get the data and setting in the input.xml
+    # the input element:
+    #          filename(str): the input.xml'path + is's name.
+    # the output elements:
+    #          matrix_data(data): the data in input.xml
+    #          problem_settings(settings): the settings in input.xml
+    
     file_xml = minidom.parse(filename)
     input_tag = file_xml.getElementsByTagName("input")[0]
     data_tag = input_tag.getElementsByTagName("data")[0]
@@ -95,8 +163,87 @@ def DataPretreatment(filename):
     problem_settings = settings(settings_tag)
     return matrix_data, problem_settings
     
+def DataLog(str1):
+    # this is a function for datalog output
+    now_time = "Now Time Is: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "\n"
+    f = open("Data.log","w+")
+    f.write(now_time)
+    f.write(str1+"\n")
+    f.close()
+    return 0
 
+
+def DataXlsWrite(sheet_title,title,data):
+    # this is a function to output the xls file
+    workbook = xlwt.Workbook(encoding = "utf-8")
+    worksheet = workbook.add_sheet(sheet_title)
+    style = xlwt.XFStyle()
+    font = xlwt.Font() # 为样式创建字体
+    font.name = 'Times New Roman' 
+    font.bold = True # 黑体
+    font.underline = True # 下划线
+    font.italic = True # 斜体字
+    style.font = font # 设定样式
+    
+    alignment = xlwt.Alignment()
+    alignment.horz = 0x02
+    alignment.vert = 0x01
+    style.alignment = alignment
+    
+    worksheet.write(0, 0, 'Data-Time', style)#写入数据标题
+    for i in range(len(title)):
+        worksheet.write(1, i, title[i], style)
+        
+    style = xlwt.XFStyle()
+    style.num_format_str = 'M/D/YY' # Other options: D-MMM-YY, D-MMM, MMM-YY, h:mm, h:mm:ss, h:mm, h:mm:ss, M/D/YY h:mm, mm:ss, [h]:mm:ss, mm:ss.0
+    alignment = xlwt.Alignment()
+    alignment.horz = 0x02
+    alignment.vert = 0x01
+    style.alignment = alignment
+    
+    worksheet.write(0, 1, datetime.datetime.now(), style) # 标记该数据创建时间
+    
+    style = xlwt.XFStyle()
+    alignment = xlwt.Alignment()
+    alignment.horz = 0x02
+    alignment.vert = 0x01
+    style.alignment = alignment
+    
+    for i in range(len(data)):
+        for j in range(len(data[i])):
+            worksheet.write(2+j, i, str(data[i][j]), style)
+    workbook.save(sheet_title + ".xls") # 保存文件
+    
+    return 0
+
+
+def DataPlot(x,y,title,x_label,y_label):
+    # this is a function for data plot.
+    plt.axes(yscale = "log")
+    l1 = plt.plot(x, y, color='r',marker='o',linestyle='dashed')
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    # plt.legend(handles = [l1], labels = [y_label], loc = "best")
+    plt.savefig(title+".jpg")
+    plt.close()
+    return 0
+
+
+def DataAnalysis(solution_name,data):
+    # this is a function to analysis the data
+    if solution_name == "Conjugate-gradient-method":
+        sheet_title = "Conjugate-gradient-method"
+        x_label = "The number of iterations"
+        y_label = "Error"
+        title = [x_label,y_label,"Genuine Solution"]
+        DataXlsWrite(sheet_title,title,data)
+        DataPlot(data[0],data[1],sheet_title,x_label,y_label)
+    return 0
+        
+        
 def ConjugateGradientMethod(matrix_data,namx,criteria):
+    # this is a function to slove the equation by Conjugate Gradient Method.
     # use the fanshu to judge the error
     matrix_A = matrix_data.matrix_A.matrix_elements
     matrix_B = matrix_data.matrix_B.matrix_elements
@@ -107,6 +254,8 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
     solution_error = []
     residual.append(matrix_B-np.dot(matrix_A,x))
     if np.linalg.norm(residual[0],ord_num) < criteria:
+        DataLog("The first x is the real x\n")
+        DataLog("The first x is 0\n")
         return 0
     d = residual[0]
     for i in range(namx):
@@ -119,18 +268,29 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
         else:
             beta = -(np.dot(residual[-1].T,np.dot(matrix_A,d))/np.dot(d.T,np.dot(matrix_A,d)))
             d = residual[-1] + beta[0,0]*d
-    print(1)
+    if i == (namx - 1):
+        DataLog("The iterative calculation has reached the maximum number of iterations, but the calculation still cannot converge.\n")
+    else:
+        data=[[]]
+        data.append(solution_error)
+        data.append([])
+        for i in range(1,len(solution_error)+1):
+            data[0].append(i)
+        for i in range(len(x)):
+            data[2].append(x[i][0,0])
+        DataAnalysis("Conjugate-gradient-method",data)
+        print(1)
+    return 0
     
     
-    
-
 def MethodSelect(matrix_data,problem_settings):
+    # this is a function for Method select
     if problem_settings.solution == "Conjugate-gradient-method":
         ConjugateGradientMethod(matrix_data,problem_settings.nmax,problem_settings.criteria)
         
 
-
 if __name__ == "__main__":
+    # for main!
     input_filename = "D:\Document\Python\Calculation-Method-\input\Conjugate-gradient-method-input.xml"
     matrix_data, problem_settings = DataPretreatment(input_filename)
     MethodSelect(matrix_data,problem_settings)
