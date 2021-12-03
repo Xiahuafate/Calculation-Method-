@@ -155,42 +155,48 @@ def DataPretreatment(filename):
     #          matrix_data(data): the data in input.xml
     #          problem_settings(settings): the settings in input.xml
     
-    file_xml = minidom.parse(filename)
-    input_tag = file_xml.getElementsByTagName("input")[0]
-    data_tag = input_tag.getElementsByTagName("data")[0]
-    settings_tag = input_tag.getElementsByTagName("settings")[0]
-    matrix_data = data(data_tag)
-    problem_settings = settings(settings_tag)
-    return matrix_data, problem_settings
+    file_xml = minidom.parse(filename) # get the input.xml's tree leavel
+    input_tag = file_xml.getElementsByTagName("input")[0] # get the input_tag table
+    data_tag = input_tag.getElementsByTagName("data")[0] # get the data_tag table in the input_tag table
+    settings_tag = input_tag.getElementsByTagName("settings")[0] # get the settings_tag table in the input_tag table
+    matrix_data = data(data_tag) # get the matrix data
+    problem_settings = settings(settings_tag) # get the settings of the problem
+    return matrix_data, problem_settings # return the matrix_data and problem_settings
     
 def DataLog(str1):
     # this is a function for datalog output
-    now_time = "Now Time Is: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "\n"
-    f = open("Data.log","w+")
-    f.write(now_time)
-    f.write(str1+"\n")
+    # the input element:
+    #          str1: the str that needed to write into the Data.log file.
+    now_time = "Now Time Is: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "\n" # get the current time
+    f = open("Data.log","w+") 
+    f.write(now_time) # write the current time
+    f.write(str1+"\n") # write the str that need to write into the file of data.log
     f.close()
     return 0
 
 
 def DataXlsWrite(sheet_title,title,data):
     # this is a function to output the xls file
+    # the input element:
+    #          sheet_title(str): the name of sheet and is also the name of xlsfile that be saved.
+    #          title(list(str)): the title of the data
+    #          data(list(str)): the data need to be writed into the xlsfile
     workbook = xlwt.Workbook(encoding = "utf-8")
     worksheet = workbook.add_sheet(sheet_title)
     style = xlwt.XFStyle()
-    font = xlwt.Font() # 为样式创建字体
+    font = xlwt.Font() # Create a font for the style
     font.name = 'Times New Roman' 
-    font.bold = True # 黑体
-    font.underline = True # 下划线
-    font.italic = True # 斜体字
-    style.font = font # 设定样式
+    font.bold = True # black body
+    font.underline = True # The underline
+    font.italic = True # italics
+    style.font = font # Set the style
     
     alignment = xlwt.Alignment()
     alignment.horz = 0x02
     alignment.vert = 0x01
     style.alignment = alignment
     
-    worksheet.write(0, 0, 'Data-Time', style)#写入数据标题
+    worksheet.write(0, 0, 'Data-Time', style) # Write data title
     for i in range(len(title)):
         worksheet.write(1, i, title[i], style)
         
@@ -201,7 +207,7 @@ def DataXlsWrite(sheet_title,title,data):
     alignment.vert = 0x01
     style.alignment = alignment
     
-    worksheet.write(0, 1, datetime.datetime.now(), style) # 标记该数据创建时间
+    worksheet.write(0, 1, datetime.datetime.now(), style) # Marks when the data was created
     
     style = xlwt.XFStyle()
     alignment = xlwt.Alignment()
@@ -212,26 +218,35 @@ def DataXlsWrite(sheet_title,title,data):
     for i in range(len(data)):
         for j in range(len(data[i])):
             worksheet.write(2+j, i, str(data[i][j]), style)
-    workbook.save(sheet_title + ".xls") # 保存文件
+    workbook.save(sheet_title + ".xls") # Save the file
     
     return 0
 
 
 def DataPlot(x,y,title,x_label,y_label):
     # this is a function for data plot.
-    plt.axes(yscale = "log")
+    # the input element:
+    #          x(list): the data in x axis.
+    #          y(list): the data in y axis
+    #          title(str): the title of the figure and the name of the file saved
+    #          x_label(str): the name of x_label
+    #          y_label(str): the name of y_label
+    plt.axes(yscale = "log") # the y axis is log
     l1 = plt.plot(x, y, color='r',marker='o',linestyle='dashed')
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
     # plt.legend(handles = [l1], labels = [y_label], loc = "best")
-    plt.savefig(title+".jpg")
+    plt.savefig(title+".jpg") # save the file
     plt.close()
     return 0
 
 
 def DataAnalysis(solution_name,data):
     # this is a function to analysis the data
+    # the input element:
+    #          solution_name(str): the name of solution.
+    #          data(str): the data calculated
     if solution_name == "Conjugate-gradient-method":
         sheet_title = "Conjugate-gradient-method"
         x_label = "The number of iterations"
@@ -244,16 +259,21 @@ def DataAnalysis(solution_name,data):
         
 def ConjugateGradientMethod(matrix_data,namx,criteria):
     # this is a function to slove the equation by Conjugate Gradient Method.
+    # the input element:
+    #          matrix_data(data): the data of problem.
+    #          namx(int): the Maximum iteration
+    #          criteria(float): Convergence criteria
     # use the fanshu to judge the error
     matrix_A = matrix_data.matrix_A.matrix_elements
     matrix_B = matrix_data.matrix_B.matrix_elements
-    ord_num = 2
+    ord_num = 2 # the fanshu = 2
     residual = [] # this is the reesidual bewteen the real value and the number value
     x = np.zeros((matrix_B.shape[0],matrix_B.shape[1]))# this is solution of the equation
     # this is the first value for the solution
     solution_error = []
     residual.append(matrix_B-np.dot(matrix_A,x))
     if np.linalg.norm(residual[0],ord_num) < criteria:
+        # if the first data is the real data 
         DataLog("The first x is the real x\n")
         DataLog("The first x is 0\n")
         return 0
@@ -269,8 +289,10 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
             beta = -(np.dot(residual[-1].T,np.dot(matrix_A,d))/np.dot(d.T,np.dot(matrix_A,d)))
             d = residual[-1] + beta[0,0]*d
     if i == (namx - 1):
+        # if the i = the Maximum iteration
         DataLog("The iterative calculation has reached the maximum number of iterations, but the calculation still cannot converge.\n")
     else:
+        # deal with the data
         data=[[]]
         data.append(solution_error)
         data.append([])
@@ -279,7 +301,6 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
         for i in range(len(x)):
             data[2].append(x[i][0,0])
         DataAnalysis("Conjugate-gradient-method",data)
-        print(1)
     return 0
     
     
