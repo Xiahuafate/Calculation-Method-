@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from xml.dom import minidom
 import os
 import time
+from numpy.core.fromnumeric import size
 import xlwt
 import datetime
 
@@ -27,6 +28,7 @@ class settings:
     #          self.solution(str): the methods for this problem. The default value is "Conjugate-gradient-method"
     #          self.nmax(int): The maximum number of iterations calculated by iteration. The default value is 1000
     #          self.criteria(float): Convergence criteria for iterative computation. The default value is 1E-07
+    #          self.fitting_order(int): fittting order for least square fitting. The default value is 4
     def __init__(self,setting_tag):
         
         try:
@@ -51,6 +53,15 @@ class settings:
             self.criteria = float(self.criteria)
         except:
             self.criteria = 1E-07
+        
+        try:
+            # get the Fitting order for Least square fitting method
+            fitting_order_tag = setting_tag.getElementsByTagName("Fitting-order")[0]
+            self.fitting_order = fitting_order_tag.firstChild.data
+            self.fitting_order = int(self.fitting_order)
+        except:
+            self.fitting_order = 4
+            
             
             
 class matrix:
@@ -246,14 +257,20 @@ def DataAnalysis(solution_name,data):
     # this is a function to analysis the data
     # the input element:
     #          solution_name(str): the name of solution.
-    #          data(str): the data calculated
+    #          data(int/float): the data calculated
     if solution_name == "Conjugate-gradient-method":
+        # deal with the data of Conjugate-gradient-method
         sheet_title = "Conjugate-gradient-method"
         x_label = "The number of iterations"
         y_label = "Error"
         title = [x_label,y_label,"Genuine Solution"]
         DataXlsWrite(sheet_title,title,data)
         DataPlot(data[0],data[1],sheet_title,x_label,y_label)
+    elif solution_name == "Least-square-fitting-method":
+        # deal with the data of Least-square-fitting-method
+        sheet_title = "Least-square-fitting-method"
+        title = ["Root mean square error"]
+        DataXlsWrite(sheet_title,title,[[data]])
     return 0
         
         
@@ -304,15 +321,52 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
     return 0
     
     
+def LeastSquareFittingMethod(matrix_data, fitting_order):
+    # this is a function to slove the equation by Conjugate Gradient Method.
+    # the input element:
+    #          matrix_data(data): the data of problem.
+    #          fitting_order: the order of least square fitting
+    x = matrix_data.matrix_A.matrix_elements # the fitting data of x
+    y = matrix_data.matrix_B.matrix_elements # the fitting data of y
+    size_equation = fitting_order + 1
+    
+    matrix_A = np.matrix(np.zeros((size_equation, size_equation))) # the Normal equations of this problem
+    matrix_B = np.matrix(np.zeros((size_equation, 1))) # the b of this problem
+    
+    for i in range(size_equation):
+    # creat the Normal equations
+        for k in range(len(y)):
+            matrix_B[i,0] = matrix_B[i,0] + y[k,0] * x[k,0]**i
+        for j in range(size_equation):
+            for k in range(len(x)):
+                matrix_A[i,j] = matrix_A[i,j] + x[k,0]**(i + j)
+                
+    c = np.linalg.inv(matrix_A)@(matrix_B) # solve the Normal equations
+    
+    mean_square_error = 0 # the mean square error of the problem
+    for i in range(len(x)):
+        temp_p = 0 # the temp stroge for p(xi)
+        for j in range(size_equation):
+            temp_p = temp_p + c[j,0]*x[i,0]**j # p(xi) = a0 + a1*xi + a2*x2*x2 +  
+        mean_square_error = mean_square_error + (temp_p - y[i,0])**2 # calculate the mean square error
+    mean_square_error = mean_square_error**0.5
+    
+    DataAnalysis("Least-square-fitting-method",mean_square_error)
+    
+    return 0 
+    
+    
 def MethodSelect(matrix_data,problem_settings):
     # this is a function for Method select
     if problem_settings.solution == "Conjugate-gradient-method":
         ConjugateGradientMethod(matrix_data,problem_settings.nmax,problem_settings.criteria)
+    elif problem_settings.solution == "Least-square-fitting-method":
+        LeastSquareFittingMethod(matrix_data,problem_settings.fitting_order)
         
 
 if __name__ == "__main__":
     # for main!
-    input_filename = "D:\Document\Python\Calculation-Method-\input\Conjugate-gradient-method-input.xml"
+    input_filename = "D:\Document\Python\Calculation-Method-\input\Least-square-fitting-method-input.xml"
     matrix_data, problem_settings = DataPretreatment(input_filename)
     MethodSelect(matrix_data,problem_settings)
     

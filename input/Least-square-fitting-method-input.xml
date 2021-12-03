@@ -1,0 +1,16 @@
+<input>
+    <data>
+        <matrix_A matrix_type="input" matrix_row="9"  matrix_column="1">
+            <matrix_elements>0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9</matrix_elements>
+        </matrix_A>
+        <matrix_B matrix_type="input" matrix_row="9"  matrix_column="1">
+            <matrix_elements>5.1234 5.3057 5.5687 5.9375 6.4370 7.0978 7.9493 9.0253 10.3627</matrix_elements>
+        </matrix_B>
+    </data>
+    <settings>
+        <solution>Least-square-fitting-method</solution>
+        <NMAX>1000</NMAX>
+        <Convergence-criteria>1E-07</Convergence-criteria>
+        <Fitting-order>4</Fitting-order>
+    </settings>
+</input>
