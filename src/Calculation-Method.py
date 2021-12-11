@@ -96,6 +96,12 @@ class matrix:
             self.matrix_column = int(matrix_tag.getAttribute("matrix_column"))
         except:
             self.matrix_column = 1
+            
+        try:
+            # get the order of the equation(only use in nonlinear system)
+            self.order = int(matrix_tag.getAttribute("order"))
+        except:
+            self.order = 1
     
     def getMatrixElements(self):
         
@@ -355,6 +361,8 @@ def LeastSquareFittingMethod(matrix_data, fitting_order):
     
     return 0 
     
+def NewtonMethod(matrix_data,namx,criteria):
+    print(1)
     
 def MethodSelect(matrix_data,problem_settings):
     # this is a function for Method select
@@ -362,11 +370,13 @@ def MethodSelect(matrix_data,problem_settings):
         ConjugateGradientMethod(matrix_data,problem_settings.nmax,problem_settings.criteria)
     elif problem_settings.solution == "Least-square-fitting-method":
         LeastSquareFittingMethod(matrix_data,problem_settings.fitting_order)
+    elif problem_settings.solution == "Newton-method":
+        NewtonMethod(matrix_data, problem_settings.nmax,problem_settings.criteria)
         
 
 if __name__ == "__main__":
     # for main!
-    input_filename = "D:\Document\Python\Calculation-Method-\input\Least-square-fitting-method-input.xml"
+    input_filename = "D:\Document\Python\Calculation-Method-\input\Nonlinear-system-equation-method.xml"
     matrix_data, problem_settings = DataPretreatment(input_filename)
     MethodSelect(matrix_data,problem_settings)
     
