@@ -21,6 +21,7 @@ import time
 from numpy.core.fromnumeric import size
 import xlwt
 import datetime
+import random
 
 class settings:
     # This a class for the input.xml' settings
@@ -287,6 +288,10 @@ def DataAnalysis(solution_name,data):
         sheet_title = "Least-square-fitting-method"
         title = ["Root mean square error"]
         DataXlsWrite(sheet_title,title,[[data]])
+    elif solution_name == "Simple-iteration-method":
+        sheet_title = "Simple-iteration-method"
+        title = ["times","k","k-error"]
+        DataXlsWrite(sheet_title,title,data)
     return 0
         
         
@@ -373,6 +378,74 @@ def LeastSquareFittingMethod(matrix_data, fitting_order):
     
 def NewtonMethod(matrix_data,namx,criteria):
     print(1)
+
+def CalcultionPolynomial(coefficient_of_eqution, x):
+    f = 0
+    for i in range(1, len(coefficient_of_eqution) + 1):
+        f = f + coefficient_of_eqution[-i] * x**(i - 1)
+    return f
+
+def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
+    # this is a function for dichotomy
+    # it must need the zero point in the area !
+    x_left = calculation_area_x[0]
+    x_right = calculation_area_x[-1]
+    x_middle = (x_left + x_right) / 2.0
+    while(1):
+        f_left = CalcultionPolynomial(coefficient_of_equation, x_left)
+        f_right = CalcultionPolynomial(coefficient_of_equation, x_right)
+        f_middle = CalcultionPolynomial(coefficient_of_equation, x_middle)
+
+        if (f_left * f_middle) <= 0 :
+            x_right = x_middle
+            x_middle = (x_left + x_right) / 2.0
+        elif (f_right * f_middle) <= 0:
+            x_left = x_middle
+            x_middle = (x_left + x_right) / 2.0
+        else:
+            os._exit(0)
+
+        if abs(x_right - x_left) < criteria:
+            break
+    calculation_area_x[0] = x_left
+    calculation_area_x[-1] = x_right
+
+    return calculation_area_x
+
+        
+
+def SimpleIterationMethod(matrix_data, problem_settings):
+    # this is a function for Simple Iteration Method
+    # this function is used for solve a x equation only about x 
+    criteria = problem_settings.criteria # the criteria
+    calculation_area_x = problem_settings.calculation_area_x # the calculation area of x
+    coefficient_of_equation = matrix_data.matrix_A.matrix_elements # Coefficient of equation
+    # firt need to divde the calculation of area
+    calculation_area_x = Dichotomy(coefficient_of_equation, calculation_area_x, criteria*10000)
+    # then find the zero point
+    x_first = random.uniform(calculation_area_x[0], calculation_area_x[-1])
+    x_end = 0
+    x_record = [x_first]
+    x_error = [abs(x_first - x_end)]
+    coefficient_of_order = coefficient_of_equation[0,0]
+    coefficient_of_equation[0] = 0
+    while (abs(x_first - x_end) > criteria):
+        x_end = x_first
+        x_first = CalcultionPolynomial(coefficient_of_equation, x_end) / (0.0 - coefficient_of_order)
+        x_first = x_first[0,0]
+        x_first = pow(x_first, 1.0/6.0) / (coefficient_of_order)
+        x_record.append(x_first)
+        x_error.append(abs(x_first - x_end))
+
+    x_data = [[]]
+    [x_data[0].append(i + 1) for i in range(len(x_record))]
+    x_data.append(x_record)
+    x_data.append(x_error)
+    DataAnalysis("Simple-iteration-method",x_data)
+
+    return 0
+
+
     
 def MethodSelect(matrix_data,problem_settings):
     # this is a function for Method select
@@ -382,11 +455,15 @@ def MethodSelect(matrix_data,problem_settings):
         LeastSquareFittingMethod(matrix_data,problem_settings.fitting_order)
     elif problem_settings.solution == "Newton-method":
         NewtonMethod(matrix_data, problem_settings.nmax,problem_settings.criteria)
+    elif problem_settings.solution == "Simple-iteration-method":
+        SimpleIterationMethod(matrix_data, problem_settings)
+
+    return 0
         
 
 if __name__ == "__main__":
     # for main!
-    input_filename = "D:\Document\Python\Calculation-Method-\input\Nonlinear-system-equation-method.xml"
+    input_filename = r"C:\Users\31889\source\repos\Xiahuafate\Calculation-Method-\input\Nonlinear-system-equation-method.xml"
     matrix_data, problem_settings = DataPretreatment(input_filename)
     MethodSelect(matrix_data,problem_settings)
     
