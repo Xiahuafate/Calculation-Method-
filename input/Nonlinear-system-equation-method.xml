@@ -12,5 +12,6 @@
         <NMAX>1000</NMAX>
         <Convergence-criteria>1E-07</Convergence-criteria>
         <Fitting-order>4</Fitting-order>
-    </settings>
+        <Calculation-area-x>-1 5</Calculation-area-x>
+     </settings>
 </input>

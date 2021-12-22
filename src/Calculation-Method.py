@@ -61,6 +61,16 @@ class settings:
             self.fitting_order = int(self.fitting_order)
         except:
             self.fitting_order = 4
+
+        try:
+            # get the calculation area of x (use in the nonlinear equation solution)
+            calculation_area_x_tag = setting_tag.getElementsByTagName("Calculation-area-x")[0]
+            calculation_area_x = calculation_area_x_tag.firstChild.data
+            calculation_area_x = calculation_area_x.strip("\n").split()
+            self.calculation_area_x = []
+            [self.calculation_area_x.append(float(i)) for i in calculation_area_x]
+        except:
+            self.calculation_area_x = [-1, 1]
             
             
             
