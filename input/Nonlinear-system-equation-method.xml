@@ -1,16 +1,12 @@
 <input>
     <data>
-        <matrix_A matrix_type="input" matrix_row="3" matrix_column="7" order="2">
+        <matrix_A matrix_type="input" matrix_row="1" matrix_column="7" order="6">
             <matrix_elements>
-              1 0 1 0 1 0 -1.0
-              2 0 1 0 0 -4  0 
-              3 0 -4 0 1 0 0
+              1 -5 3 1 -7 7 -20
             </matrix_elements>
         </matrix_A>
-        <matrix_B matrix_type="input" matrix_row="3"  matrix_column="1">
+        <matrix_B matrix_type="input" matrix_row="1"  matrix_column="1">
             <matrix_elements>
-              0
-              0
               0
             </matrix_elements>
         </matrix_B>
