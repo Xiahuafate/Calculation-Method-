@@ -3,7 +3,7 @@
 #/* Codename : Calculation-Method.py                                          */
 #/*                                                                           */
 #/* Created:       2021/11/26 (Xvdongyu)                                      */
-#/* Last modified: 2016/11/26 (Xvdongyu                                       */
+#/* Last modified: 2016/12/23 (Xvdongyu                                       */
 #/* Version:       1.0.0                                                      */
 #/*                                                                           */
 #/* Description: Claculation-Method's Code                                    */
@@ -283,15 +283,22 @@ def DataAnalysis(solution_name,data):
         title = [x_label,y_label,"Genuine Solution"]
         DataXlsWrite(sheet_title,title,data)
         DataPlot(data[0],data[1],sheet_title,x_label,y_label)
+        
     elif solution_name == "Least-square-fitting-method":
         # deal with the data of Least-square-fitting-method
         sheet_title = "Least-square-fitting-method"
         title = ["Root mean square error"]
         DataXlsWrite(sheet_title,title,[[data]])
+        
     elif solution_name == "Simple-iteration-method":
+        # deal with the data:
+        #               the times of iteration
+        #               the record of x
+        #               the record of x_error
         sheet_title = "Simple-iteration-method"
         title = ["times","k","k-error"]
         DataXlsWrite(sheet_title,title,data)
+        
     elif solution_name == "Newton-method":
         sheet_title = "Newton-method"
         x_label = "The number of iterations"
@@ -299,7 +306,12 @@ def DataAnalysis(solution_name,data):
         title = [x_label,y_label,"the solutions"]
         DataXlsWrite(sheet_title,title,data)
         DataPlot(data[0],data[1],sheet_title,x_label,y_label)
+        
     elif solution_name == "Broy-method":
+        # deal with the data:
+    #               the times of iteration
+    #               the record of x_error
+    #               the record of solution
         sheet_title = "Broy-method"
         x_label = "The number of iterations"
         y_label = "Error"
@@ -391,12 +403,23 @@ def LeastSquareFittingMethod(matrix_data, fitting_order):
     return 0 
     
 def CalculationPolynomial(coefficient_of_eqution, x):
+    # this is a function for Calculation nolinear matrix
+    # the input element:
+    #          matrix_A(np.matrix): the coefficient matrix 
+    #          x(float): the x
     f = 0
+    # f = a*x^(n) + b*x(n-1) + ~
     for i in range(1, len(coefficient_of_eqution) + 1):
         f = f + coefficient_of_eqution[-i] * x**(i - 1)
+        
     return f
 
 def JacobianMatrix(matrix_A, x, order):
+    # this is a function for Jacobian matrix
+    # the input element:
+    #          matrix_A(np.matrix): the coefficient matrix 
+    #          x(np.matrix): solution vector
+    #          order: the max oreder of x
     row, column = matrix_A.shape[0], matrix_A.shape[1]
     numbers_of_x = int((column-1)/order) # the numbers of the unknowns
     coefficient = np.zeros([row,numbers_of_x,order]) # the coefficient of the unknowns elements
@@ -414,27 +437,39 @@ def JacobianMatrix(matrix_A, x, order):
     return matrix_jacobian
     
 def CalculationNoLinearMatrix(matrix_A, x, order):
-    row, column = matrix_A.shape[0], matrix_A.shape[1]
+    # this is a function for Calculation nolinear matrix
+    # the input element:
+    #          matrix_A(np.matrix): the coefficient matrix 
+    #          x(np.matrix): solution vector
+    #          order: the max oreder of x
+    column = matrix_A.shape[1]
     numbers_of_x = int((column-1)/order)
     matrix_x = np.ones([column,1])
+    
     for i in range(numbers_of_x):
         for j in range(order):
             matrix_x[j+i*order] = x[i]**(order-j)
+            
     matrix_x = np.matrix(matrix_x)
     result = matrix_A * matrix_x
+    
     return result
     
 def NewtonMethod(matrix_data,problem_settings):
-    nmax = problem_settings.nmax
-    criteria = problem_settings.criteria
-    order = matrix_data.matrix_A.order 
-    matrix_A = matrix_data.matrix_A.matrix_elements
-    matrix_B = matrix_data.matrix_B.matrix_elements
-    ord_num = 2 # fanshu
+    # this is a function for Newton method
+    # the input element:
+    #          matrix_data(data): the data of the problem
+    #          problem_settings(settings): the settings of the problem
+    nmax = problem_settings.nmax # the nmax times
+    criteria = problem_settings.criteria # the criteria 
+    order = matrix_data.matrix_A.order # the max order of the x
+    matrix_A = matrix_data.matrix_A.matrix_elements # coefficient matrix
+    matrix_B = matrix_data.matrix_B.matrix_elements # the matrix b
+    ord_num = 2 # norm
 
-    x_first = np.ones([matrix_B.shape[0],matrix_B.shape[1]])
-    x_end = np.zeros([matrix_B.shape[0],matrix_B.shape[1]])
-    x_error = []
+    x_first = np.ones([matrix_B.shape[0],matrix_B.shape[1]]) # the k time x
+    x_end = np.zeros([matrix_B.shape[0],matrix_B.shape[1]]) # the k-1 time x
+    x_error = [] # the error of the calculation
     
     x_error.append(np.linalg.norm(x_first - x_end, ord_num))
     i = 0
@@ -449,7 +484,10 @@ def NewtonMethod(matrix_data,problem_settings):
             
     if (i == (nmax - 1)):
         DataLog("The number of iterations has reached the upper limit of iterations")
-    
+    # deal with the data:
+    #               the times of iteration
+    #               the record of x_error
+    #               the record of solution
     x_data = [[]]
     [x_data[0].append(i + 1) for i in range(len(x_error))]
     x_data.append(x_error)
@@ -458,21 +496,25 @@ def NewtonMethod(matrix_data,problem_settings):
     DataAnalysis("Newton-method",x_data)
     
 def BroyMethod(matrix_data, problem_settings):
-    nmax = problem_settings.nmax
-    criteria = problem_settings.criteria
-    order = matrix_data.matrix_A.order 
-    matrix_A = matrix_data.matrix_A.matrix_elements
-    matrix_B = matrix_data.matrix_B.matrix_elements
-    ord_num = 2 # fanshu
-
-    x_first = np.ones([matrix_B.shape[0],matrix_B.shape[1]])
-    x_end = np.zeros([matrix_B.shape[0],matrix_B.shape[1]])
-    x_error = []
+    # this is a function for Broy method
+    # the input element:
+    #          matrix_data(data): the data of the problem
+    #          problem_settings(settings): the settings of the problem
+    nmax = problem_settings.nmax # the nmax times
+    criteria = problem_settings.criteria # the criteria 
+    order = matrix_data.matrix_A.order # the max order of the x
+    matrix_A = matrix_data.matrix_A.matrix_elements # coefficient matrix
+    matrix_B = matrix_data.matrix_B.matrix_elements # the matrix b
+    ord_num = 2 # norm
+    
+    x_first = np.ones([matrix_B.shape[0],matrix_B.shape[1]]) # the k time x
+    x_end = np.zeros([matrix_B.shape[0],matrix_B.shape[1]]) # the k-1 time x
+    x_error = [] # the error of the calculation
     
     x_error.append(np.linalg.norm(x_first - x_end, ord_num))
-    matrix_jacobian = JacobianMatrix(matrix_A, x_first, order)
-    matrix_result = -CalculationNoLinearMatrix(matrix_A, x_first, order)
-    a = np.linalg.inv(matrix_jacobian)
+    matrix_jacobian = JacobianMatrix(matrix_A, x_first, order) # Jacobian matrix
+    matrix_result = -CalculationNoLinearMatrix(matrix_A, x_first, order) # f(x_(k-1))
+    a = np.linalg.inv(matrix_jacobian) # the matrix A
     delt_x = a@(matrix_result)
     x_end = x_first
     x_first = x_first + delt_x
@@ -480,16 +522,21 @@ def BroyMethod(matrix_data, problem_settings):
     i = 0
     while (x_error[-1]>criteria):
         i= i + 1
-        s = x_first - x_end 
+        s = x_first - x_end # s = x_k - x_(k-1)
         y = CalculationNoLinearMatrix(matrix_A, x_first, order) - CalculationNoLinearMatrix(matrix_A, x_end, order)
+        # y = f(x_k) - f(x_(k-1))
         temp = a
         a = temp + (s - temp * y) * (s.T) * temp / (1 + (s.T) * temp * y)
         x_end = x_first
         x_first = x_first - a * CalculationNoLinearMatrix(matrix_A, x_end, order)
+        # x_(k+1) = x_k - A*f(x_k)
         x_error.append(np.linalg.norm(x_first - x_end, ord_num))
     if (i == (nmax - 1)):
         DataLog("The number of iterations has reached the upper limit of iterations")
-        
+    # deal with the data:
+    #               the times of iteration
+    #               the record of x_error
+    #               the record of solution
     x_data = [[]]
     [x_data[0].append(i + 1) for i in range(len(x_error))]
     x_data.append(x_error)
@@ -499,14 +546,18 @@ def BroyMethod(matrix_data, problem_settings):
 
 def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
     # this is a function for dichotomy
+    # the input element:
+    #           coefficient_of_equation(np.matrix): the coefficient of the equation
+    #           calculation_area_x(list): the oral area of the calculation
+    #           criteria(folat): the length of the need area of the calculation
     # it must need the zero point in the area !
-    x_left = calculation_area_x[0]
-    x_right = calculation_area_x[-1]
-    x_middle = (x_left + x_right) / 2.0
+    x_left = calculation_area_x[0] # x point in the left
+    x_right = calculation_area_x[-1] # x point in the right
+    x_middle = (x_left + x_right) / 2.0 # x point in the middle
     while(1):
-        f_left = CalculationPolynomial(coefficient_of_equation, x_left)
-        f_right = CalculationPolynomial(coefficient_of_equation, x_right)
-        f_middle = CalculationPolynomial(coefficient_of_equation, x_middle)
+        f_left = CalculationPolynomial(coefficient_of_equation, x_left) # the f(x_left)
+        f_right = CalculationPolynomial(coefficient_of_equation, x_right) # the f(x_right)
+        f_middle = CalculationPolynomial(coefficient_of_equation, x_middle) # the f(x_middle)
 
         if (f_left * f_middle) <= 0 :
             x_right = x_middle
@@ -519,6 +570,7 @@ def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
 
         if abs(x_right - x_left) < criteria:
             break
+    # the need area calculation 
     calculation_area_x[0] = x_left
     calculation_area_x[-1] = x_right
 
@@ -528,6 +580,9 @@ def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
 
 def SimpleIterationMethod(matrix_data, problem_settings):
     # this is a function for Simple Iteration Method
+    # the input element:
+    #          matrix_data(data): the data of the problem
+    #          problem_settings(settings): the settings of the problem
     # this function is used for solve a x equation only about x 
     criteria = problem_settings.criteria # the criteria
     calculation_area_x = problem_settings.calculation_area_x # the calculation area of x
@@ -535,20 +590,26 @@ def SimpleIterationMethod(matrix_data, problem_settings):
     # firt need to divde the calculation of area
     calculation_area_x = Dichotomy(coefficient_of_equation, calculation_area_x, criteria*10000)
     # then find the zero point
-    x_first = random.uniform(calculation_area_x[0], calculation_area_x[-1])
-    x_end = 0
-    x_record = [x_first]
-    x_error = [abs(x_first - x_end)]
-    coefficient_of_order = coefficient_of_equation[0,0]
+    # get a random point in the area
+    x_first = random.uniform(calculation_area_x[0], calculation_area_x[-1]) # the k times result of calculation
+    x_end = 0 # the k-1 times result of calculation
+    x_record = [x_first] # record every x in the calculation
+    x_error = [abs(x_first - x_end)] # record every x_error in the calculation
+    coefficient_of_order = coefficient_of_equation[0,0] # the coefficient of the max order of x
     coefficient_of_equation[0] = 0
     while (abs(x_first - x_end) > criteria):
         x_end = x_first
+        # get the result of polynomial
         x_first = CalculationPolynomial(coefficient_of_equation, x_end) / (0.0 - coefficient_of_order)
         x_first = x_first[0,0]
+        # get the new x
         x_first = pow(x_first, 1.0/6.0) / (coefficient_of_order)
         x_record.append(x_first)
         x_error.append(abs(x_first - x_end))
-
+    # deal with the data:
+    #               the times of iteration
+    #               the record of x
+    #               the record of x_error
     x_data = [[]]
     [x_data[0].append(i + 1) for i in range(len(x_record))]
     x_data.append(x_record)
@@ -561,14 +622,22 @@ def SimpleIterationMethod(matrix_data, problem_settings):
     
 def MethodSelect(matrix_data,problem_settings):
     # this is a function for Method select
+    # the input element:
+    #          matrix_data(data): the data of the problem
+    #          problem_settings(settings): the settings of the problem
+    # the use is obvious
     if problem_settings.solution == "Conjugate-gradient-method":
         ConjugateGradientMethod(matrix_data,problem_settings.nmax,problem_settings.criteria)
+        
     elif problem_settings.solution == "Least-square-fitting-method":
         LeastSquareFittingMethod(matrix_data,problem_settings.fitting_order)
+        
     elif problem_settings.solution == "Newton-method":
         NewtonMethod(matrix_data, problem_settings)
+        
     elif problem_settings.solution == "Simple-iteration-method":
         SimpleIterationMethod(matrix_data, problem_settings)
+        
     elif problem_settings.solution == "Broy-method":
         BroyMethod(matrix_data, problem_settings)
 
@@ -577,7 +646,10 @@ def MethodSelect(matrix_data,problem_settings):
 
 if __name__ == "__main__":
     # for main!
+    # the input file name 
     input_filename = "D:\\Document\\Python\\Calculation-Method-\\input\\Nonlinear-system-equation-method.xml"
+    # read the input card
     matrix_data, problem_settings = DataPretreatment(input_filename)
+    # select the method and do the calculations
     MethodSelect(matrix_data,problem_settings)
     
