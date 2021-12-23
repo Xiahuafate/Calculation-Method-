@@ -463,7 +463,7 @@ def MethodSelect(matrix_data,problem_settings):
 
 if __name__ == "__main__":
     # for main!
-    input_filename = r"C:\Users\31889\source\repos\Xiahuafate\Calculation-Method-\input\Nonlinear-system-equation-method.xml"
+    input_filename = "D:\\Document\\Python\\Calculation-Method-\\input\\Nonlinear-system-equation-method.xml"
     matrix_data, problem_settings = DataPretreatment(input_filename)
     MethodSelect(matrix_data,problem_settings)
     
