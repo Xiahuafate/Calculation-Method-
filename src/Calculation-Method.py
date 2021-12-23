@@ -45,7 +45,7 @@ class settings:
             self.nmax = nmax_tag.firstChild.data
             self.nmax = int(self.nmax)
         except:
-            self.namx = 1000
+            self.nmax = 1000
             
         try:
             # get the convergence criteria for iterative computation.
@@ -292,14 +292,21 @@ def DataAnalysis(solution_name,data):
         sheet_title = "Simple-iteration-method"
         title = ["times","k","k-error"]
         DataXlsWrite(sheet_title,title,data)
+    elif solution_name == "Newton-method":
+        sheet_title = "Newton-method"
+        x_label = "The number of iterations"
+        y_label = "Error"
+        title = [x_label,y_label,"the solutions"]
+        DataXlsWrite(sheet_title,title,data)
+        DataPlot(data[0],data[1],sheet_title,x_label,y_label)
     return 0
         
         
-def ConjugateGradientMethod(matrix_data,namx,criteria):
+def ConjugateGradientMethod(matrix_data,nmax,criteria):
     # this is a function to slove the equation by Conjugate Gradient Method.
     # the input element:
     #          matrix_data(data): the data of problem.
-    #          namx(int): the Maximum iteration
+    #          nmax(int): the Maximum iteration
     #          criteria(float): Convergence criteria
     # use the fanshu to judge the error
     matrix_A = matrix_data.matrix_A.matrix_elements
@@ -316,7 +323,7 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
         DataLog("The first x is 0\n")
         return 0
     d = residual[0]
-    for i in range(namx):
+    for i in range(nmax):
         alpha = np.dot(residual[i].T,d)/np.dot(d.T,np.dot(matrix_A,d))
         x = x + alpha[0,0]*d
         residual.append((matrix_B-np.dot(matrix_A,x)))
@@ -326,7 +333,7 @@ def ConjugateGradientMethod(matrix_data,namx,criteria):
         else:
             beta = -(np.dot(residual[-1].T,np.dot(matrix_A,d))/np.dot(d.T,np.dot(matrix_A,d)))
             d = residual[-1] + beta[0,0]*d
-    if i == (namx - 1):
+    if i == (nmax - 1):
         # if the i = the Maximum iteration
         DataLog("The iterative calculation has reached the maximum number of iterations, but the calculation still cannot converge.\n")
     else:
@@ -376,14 +383,74 @@ def LeastSquareFittingMethod(matrix_data, fitting_order):
     
     return 0 
     
-def NewtonMethod(matrix_data,namx,criteria):
-    print(1)
-
-def CalcultionPolynomial(coefficient_of_eqution, x):
+def CalculationPolynomial(coefficient_of_eqution, x):
     f = 0
     for i in range(1, len(coefficient_of_eqution) + 1):
         f = f + coefficient_of_eqution[-i] * x**(i - 1)
     return f
+
+def JacobianMatrix(matrix_A, x, order):
+    row, column = matrix_A.shape[0], matrix_A.shape[1]
+    numbers_of_x = int((column-1)/order) # the numbers of the unknowns
+    coefficient = np.zeros([row,numbers_of_x,order]) # the coefficient of the unknowns elements
+    # get the coefficient 
+    for i in range(row):
+        for j in range(numbers_of_x):
+            for k in range(order):
+                coefficient[i,j,k] = matrix_A[i,(k+j*order)]*(order - k)
+    # get the jacobian
+    matrix_jacobian = np.zeros([numbers_of_x,numbers_of_x])
+    for i in range(numbers_of_x):
+        for j in range(numbers_of_x):
+            matrix_jacobian[i,j] = CalculationPolynomial(coefficient[i,j],x[j])
+    
+    return matrix_jacobian
+    
+def CalculationNoLinearMatrix(matrix_A, x, order):
+    row, column = matrix_A.shape[0], matrix_A.shape[1]
+    numbers_of_x = int((column-1)/order)
+    matrix_x = np.ones([column,1])
+    for i in range(numbers_of_x):
+        for j in range(order):
+            matrix_x[j+i*order] = x[i]**(order-j)
+    matrix_x = np.matrix(matrix_x)
+    result = matrix_A * matrix_x
+    return result
+    
+def NewtonMethod(matrix_data,problem_settings):
+    nmax = problem_settings.nmax
+    criteria = problem_settings.criteria
+    order = matrix_data.matrix_A.order 
+    matrix_A = matrix_data.matrix_A.matrix_elements
+    matrix_B = matrix_data.matrix_B.matrix_elements
+    ord_num = 2 # fanshu
+
+    x_first = np.ones([matrix_B.shape[0],matrix_B.shape[1]])
+    x_end = np.zeros([matrix_B.shape[0],matrix_B.shape[1]])
+    x_error = []
+    
+    x_error.append(np.linalg.norm(x_first - x_end, ord_num))
+    i = 0
+    while (x_error[-1]>criteria):
+        i= i + 1
+        matrix_jacobian = JacobianMatrix(matrix_A, x_first, order)
+        matrix_result = -CalculationNoLinearMatrix(matrix_A, x_first, order)
+        delt_x = np.linalg.inv(matrix_jacobian)@(matrix_result)
+        x_end = x_first
+        x_first = x_first + delt_x
+        x_error.append(np.linalg.norm(x_first - x_end, ord_num))
+            
+    if (i == (nmax - 1)):
+        DataLog("The number of iterations has reached the upper limit of iterations")
+    
+    x_data = [[]]
+    [x_data[0].append(i + 1) for i in range(len(x_error))]
+    x_data.append(x_error)
+    x_data.append([])
+    [x_data[2].append(x_first[i,0]) for i in range(len(x_first))]
+    DataAnalysis("Newton-method",x_data)
+    
+
 
 def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
     # this is a function for dichotomy
@@ -392,9 +459,9 @@ def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
     x_right = calculation_area_x[-1]
     x_middle = (x_left + x_right) / 2.0
     while(1):
-        f_left = CalcultionPolynomial(coefficient_of_equation, x_left)
-        f_right = CalcultionPolynomial(coefficient_of_equation, x_right)
-        f_middle = CalcultionPolynomial(coefficient_of_equation, x_middle)
+        f_left = CalculationPolynomial(coefficient_of_equation, x_left)
+        f_right = CalculationPolynomial(coefficient_of_equation, x_right)
+        f_middle = CalculationPolynomial(coefficient_of_equation, x_middle)
 
         if (f_left * f_middle) <= 0 :
             x_right = x_middle
@@ -431,7 +498,7 @@ def SimpleIterationMethod(matrix_data, problem_settings):
     coefficient_of_equation[0] = 0
     while (abs(x_first - x_end) > criteria):
         x_end = x_first
-        x_first = CalcultionPolynomial(coefficient_of_equation, x_end) / (0.0 - coefficient_of_order)
+        x_first = CalculationPolynomial(coefficient_of_equation, x_end) / (0.0 - coefficient_of_order)
         x_first = x_first[0,0]
         x_first = pow(x_first, 1.0/6.0) / (coefficient_of_order)
         x_record.append(x_first)
@@ -454,7 +521,7 @@ def MethodSelect(matrix_data,problem_settings):
     elif problem_settings.solution == "Least-square-fitting-method":
         LeastSquareFittingMethod(matrix_data,problem_settings.fitting_order)
     elif problem_settings.solution == "Newton-method":
-        NewtonMethod(matrix_data, problem_settings.nmax,problem_settings.criteria)
+        NewtonMethod(matrix_data, problem_settings)
     elif problem_settings.solution == "Simple-iteration-method":
         SimpleIterationMethod(matrix_data, problem_settings)
 
