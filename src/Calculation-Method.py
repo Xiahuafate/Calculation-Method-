@@ -299,6 +299,13 @@ def DataAnalysis(solution_name,data):
         title = [x_label,y_label,"the solutions"]
         DataXlsWrite(sheet_title,title,data)
         DataPlot(data[0],data[1],sheet_title,x_label,y_label)
+    elif solution_name == "Broy-method":
+        sheet_title = "Broy-method"
+        x_label = "The number of iterations"
+        y_label = "Error"
+        title = [x_label,y_label,"the solutions"]
+        DataXlsWrite(sheet_title,title,data)
+        DataPlot(data[0],data[1],sheet_title,x_label,y_label)
     return 0
         
         
@@ -450,7 +457,45 @@ def NewtonMethod(matrix_data,problem_settings):
     [x_data[2].append(x_first[i,0]) for i in range(len(x_first))]
     DataAnalysis("Newton-method",x_data)
     
+def BroyMethod(matrix_data, problem_settings):
+    nmax = problem_settings.nmax
+    criteria = problem_settings.criteria
+    order = matrix_data.matrix_A.order 
+    matrix_A = matrix_data.matrix_A.matrix_elements
+    matrix_B = matrix_data.matrix_B.matrix_elements
+    ord_num = 2 # fanshu
 
+    x_first = np.ones([matrix_B.shape[0],matrix_B.shape[1]])
+    x_end = np.zeros([matrix_B.shape[0],matrix_B.shape[1]])
+    x_error = []
+    
+    x_error.append(np.linalg.norm(x_first - x_end, ord_num))
+    matrix_jacobian = JacobianMatrix(matrix_A, x_first, order)
+    matrix_result = -CalculationNoLinearMatrix(matrix_A, x_first, order)
+    a = np.linalg.inv(matrix_jacobian)
+    delt_x = a@(matrix_result)
+    x_end = x_first
+    x_first = x_first + delt_x
+    x_error.append(np.linalg.norm(x_first - x_end, ord_num))
+    i = 0
+    while (x_error[-1]>criteria):
+        i= i + 1
+        s = x_first - x_end 
+        y = CalculationNoLinearMatrix(matrix_A, x_first, order) - CalculationNoLinearMatrix(matrix_A, x_end, order)
+        temp = a
+        a = temp + (s - temp * y) * (s.T) * temp / (1 + (s.T) * temp * y)
+        x_end = x_first
+        x_first = x_first - a * CalculationNoLinearMatrix(matrix_A, x_end, order)
+        x_error.append(np.linalg.norm(x_first - x_end, ord_num))
+    if (i == (nmax - 1)):
+        DataLog("The number of iterations has reached the upper limit of iterations")
+        
+    x_data = [[]]
+    [x_data[0].append(i + 1) for i in range(len(x_error))]
+    x_data.append(x_error)
+    x_data.append([])
+    [x_data[2].append(x_first[i,0]) for i in range(len(x_first))]
+    DataAnalysis("Broy-method",x_data)
 
 def Dichotomy(coefficient_of_equation, calculation_area_x, criteria):
     # this is a function for dichotomy
@@ -524,6 +569,8 @@ def MethodSelect(matrix_data,problem_settings):
         NewtonMethod(matrix_data, problem_settings)
     elif problem_settings.solution == "Simple-iteration-method":
         SimpleIterationMethod(matrix_data, problem_settings)
+    elif problem_settings.solution == "Broy-method":
+        BroyMethod(matrix_data, problem_settings)
 
     return 0
         
